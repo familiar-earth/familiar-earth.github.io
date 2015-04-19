@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import csv
+import json
+import re
+import sys
+
+context = {
+    'campaign': None,
+    'aircraft': None,
+    'flight': None,
+}
+
+RE_ARG = re.compile('--(?P<name>campaign|aircraft|flight)=(?P<value>.*)')
+
+PREAMBLE = '''(function() {
+    "use strict";
+
+    window.Demo = '''
+CLOSING = '''
+}());
+'''
+
+class MinMax:
+    def __init__(self):
+        self.min = None
+        self.max = None
+    def add(self, elem):
+        if self.min is None or elem < self.min:
+            self.min = elem
+        if self.max is None or elem > self.max:
+            self.max = elem
+
+for arg in sys.argv[1:]:
+    arg_match = RE_ARG.match(arg)
+    if arg_match:
+        arg_name = arg_match.group('name')
+        arg_value = arg_match.group('value')
+        context[arg_name] = arg_value
+    else:
+        print('bad arg', file=sys.stderr)
+        sys.exit(1)
+
+navdata = []
+start_stop = MinMax()
+reader = csv.DictReader(sys.stdin)
+for row in reader:
+    if row['TimeStamp'].endswith('00.000'):
+        timestamp = row['TimeStamp'] + 'Z'
+        start_stop.add(timestamp)
+        longitude = float(row['Longitude'])
+        latitude = float(row['Latitude'])
+        altitude = float(row['GPS_Altitude']) * 0.3048
+        navdata.append({
+            'timestamp': timestamp,
+            'longitude': longitude,
+            'latitude':  latitude,
+            'altitude':  altitude,
+        })
+
+sys.stdout.write(PREAMBLE)
+json.dump({
+    'start':   start_stop.min,
+    'stop':    start_stop.max,
+    'navdata': navdata,
+}, sys.stdout, sort_keys=True, indent=4, separators=(',', ': '))
+sys.stdout.write(CLOSING)

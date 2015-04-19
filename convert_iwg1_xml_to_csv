@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+import csv
+import re
+try:
+    import xml.etree.cElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
+
+PARAMETER_QNAME = '{urn:xmlns:reveal}parameter'
+ID_QNAME = 'id'
+XML_ID_QNAME = '{http://www.w3.org/XML/1998/namespace}id'
+
+def convert_iwg1_xml_to_csv(input, output):
+    fields = ['IWG1']
+
+    root = ET.parse(input).getroot()
+    for parameter in root.findall(PARAMETER_QNAME):
+        if parameter.attrib.has_key(ID_QNAME):
+            fields.append(parameter.attrib[ID_QNAME])
+        elif parameter.attrib.has_key(XML_ID_QNAME):
+            fields.append(parameter.attrib[XML_ID_QNAME])
+        else:
+            pass # dunno what to do about missing 'id'
+
+    writer = csv.writer(output)
+    writer.writerow(fields)
+
+if __name__ == '__main__':
+    import sys
+    convert_iwg1_xml_to_csv(input=sys.stdin, output=sys.stdout)

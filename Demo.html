@@ -7,18 +7,19 @@
     <meta name="description" content="Draw a box.">
     <meta name="cesium-sandcastle-labels" content="Showcases">
     <title>Cesium Demo</title>
-    <script type="text/javascript" src="../Sandcastle-header.js"></script>
-    <script type="text/javascript" src="../../../ThirdParty/requirejs-2.1.9/require.js"></script>
+    <script type="text/javascript" src="Cesium-1.8/Apps/Sandcastle/Sandcastle-header.js"></script>
+    <script type="text/javascript" src="Demo.js"></script>
+    <script type="text/javascript" src="Cesium-1.8/ThirdParty/requirejs-2.1.9/require.js"></script>
     <script type="text/javascript">
     require.config({
-        baseUrl : '../../../Source',
+        baseUrl : 'Cesium-1.8/Source',
         waitSeconds : 60
     });
     </script>
 </head>
 <body class="sandcastle-loading" data-sandcastle-bucket="bucket-requirejs.html">
 <style>
-    @import url(../templates/bucket.css);
+    @import url(Cesium-1.8/Apps/Sandcastle/templates/bucket.css);
 </style>
 <div id="cesiumContainer" class="fullSize"></div>
 <div id="loadingOverlay"><h1>Loading...</h1></div>
@@ -52,8 +53,8 @@ viewer.scene.globe.depthTestAgainstTerrain = true;
 Cesium.Math.setRandomNumberSeed(3);
 
 //Set bounds of our simulation time
-var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
-var stop = Cesium.JulianDate.addSeconds(start, 360, new Cesium.JulianDate());
+var start = Cesium.JulianDate.fromIso8601(window.Demo.start);
+var stop = Cesium.JulianDate.fromIso8601(window.Demo.stop);
 
 //Make sure viewer is at the desired time.
 viewer.clock.startTime = start.clone();
@@ -65,13 +66,13 @@ viewer.clock.multiplier = 10;
 //Set timeline to simulation bounds
 viewer.timeline.zoomTo(start, stop);
 
-//Generate a random circular pattern with varying heights.
-function computeCirclularFlight(lon, lat, radius) {
+//Compute position property from navigation data
+function computeFlight(navdata) {
     var property = new Cesium.SampledPositionProperty();
-    for (var i = 0; i <= 360; i += 45) {
+    for (var i = 0; i < navdata.length; i++) {
         var radians = Cesium.Math.toRadians(i);
-        var time = Cesium.JulianDate.addSeconds(start, i, new Cesium.JulianDate());
-        var position = Cesium.Cartesian3.fromDegrees(lon + (radius * 1.5 * Math.cos(radians)), lat + (radius * Math.sin(radians)), Cesium.Math.nextRandomNumber() * 500 + 1750);
+        var time = Cesium.JulianDate.fromIso8601(navdata[i].timestamp);
+        var position = Cesium.Cartesian3.fromDegrees(navdata[i].longitude, navdata[i].latitude, navdata[i].altitude);
         property.addSample(time, position);
 
         //Also create a point for each sample we generate.
@@ -89,7 +90,7 @@ function computeCirclularFlight(lon, lat, radius) {
 }
 
 //Compute the entity position property.
-var position = computeCirclularFlight(-112.110693, 36.0994841, 0.03);
+var position = computeFlight(window.Demo.navdata);
 
 //Actually create the entity
 var entity = viewer.entities.add({
@@ -108,7 +109,7 @@ var entity = viewer.entities.add({
 
     //Load the Cesium plane model to represent the entity
     model : {
-        uri : '../../SampleData/models/CesiumAir/Cesium_Air.gltf',
+        uri : 'Cesium-1.8/Apps/SampleData/models/CesiumAir/Cesium_Air.gltf',
         minimumPixelSize : 64
     },
 
