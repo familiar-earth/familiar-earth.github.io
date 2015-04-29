@@ -2,6 +2,7 @@
     "use strict";
 
     window.Demo = {
+    "gltf": "gltfs/N871NA.gltf",
     "navdata": [
         {
             "altitude": 1.24968,

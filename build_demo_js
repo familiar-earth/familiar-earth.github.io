@@ -61,6 +61,7 @@ for row in reader:
 
 sys.stdout.write(PREAMBLE)
 json.dump({
+    'gltf':    'gltfs/' + context['aircraft'] + '.gltf',
     'start':   start_stop.min,
     'stop':    start_stop.max,
     'navdata': navdata,
